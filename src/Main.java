@@ -11,7 +11,7 @@ public class Main {
         JFrame frame = new JFrame("Budgie");
         frame.setContentPane(new MainFrame().getRoot());
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.pack();
+        frame.setSize(800, 600);
         frame.setVisible(true);
     }
 }
