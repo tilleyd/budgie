@@ -215,7 +215,7 @@
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <component id="93a65" class="javax.swing.JButton" binding="addButton1" default-binding="true">
+                  <component id="93a65" class="javax.swing.JButton" binding="addCategoryButton">
                     <constraints>
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                     </constraints>
@@ -228,7 +228,7 @@
                       <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                     </constraints>
                   </hspacer>
-                  <component id="e983c" class="javax.swing.JButton" binding="deleteButton1" default-binding="true">
+                  <component id="e983c" class="javax.swing.JButton" binding="deleteCategoryButton">
                     <constraints>
                       <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                     </constraints>
@@ -282,7 +282,7 @@
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <component id="3c9d3" class="javax.swing.JButton" binding="addButton" default-binding="true">
+                  <component id="3c9d3" class="javax.swing.JButton" binding="addCurrencyButton">
                     <constraints>
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                     </constraints>
@@ -290,7 +290,7 @@
                       <text value="Add"/>
                     </properties>
                   </component>
-                  <component id="11f7e" class="javax.swing.JButton" binding="deleteButton" default-binding="true">
+                  <component id="11f7e" class="javax.swing.JButton" binding="deleteCurrencyButton">
                     <constraints>
                       <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                     </constraints>

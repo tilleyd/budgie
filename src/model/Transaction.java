@@ -4,31 +4,27 @@ import java.util.Date;
 
 public class Transaction {
     final private int id;
-    final private Category category;
-    final private Account account;
+    final private String categoryName;
     final private Decimal amount;
     final private Date date;
-    final private Transaction balancingTransaction;
+    final private String info;
+    final private String transferAccountName;
 
-    public Transaction(int id, Category category, Account account, Decimal amount, Date date, Transaction balancingTransaction) {
+    public Transaction(int id, String categoryName, Decimal amount, Date date, String info, String transferAccountName) {
         this.id = id;
-        this.category = category;
-        this.account = account;
+        this.categoryName = categoryName;
         this.amount = amount;
         this.date = date;
-        this.balancingTransaction = balancingTransaction;
+        this.info = info;
+        this.transferAccountName = transferAccountName;
     }
 
     public int getId() {
         return id;
     }
 
-    public Category getCategory() {
-        return category;
-    }
-
-    public Account getAccount() {
-        return account;
+    public String getCategoryName() {
+        return categoryName;
     }
 
     public Decimal getAmount() {
@@ -39,12 +35,16 @@ public class Transaction {
         return date;
     }
 
-    public Transaction getBalancingTransaction() {
-        return balancingTransaction;
+    public String getInfo() {
+        return info;
+    }
+
+    public String getTransferAccountName() {
+        return transferAccountName;
     }
 
     public boolean isTransfer() {
-        return balancingTransaction != null;
+        return transferAccountName != null;
     }
 
     public boolean isIncome() {
