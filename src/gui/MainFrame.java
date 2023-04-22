@@ -11,6 +11,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 
+import controller.Cache;
 import database.Database;
 import database.DatabaseError;
 import model.*;
@@ -20,7 +21,7 @@ public class MainFrame {
     private JTabbedPane tabbedPane;
     private JTable accountsTable;
     private JButton newAccountButton;
-    private JButton accountSettingsButton;
+    private JButton editAccountButton;
     private JTextField balanceField;
     private JComboBox<String> accountsCurrencyBox;
     private JList<String> accountsList;
@@ -36,13 +37,15 @@ public class MainFrame {
     private JButton deleteCategoryButton;
 
     private final Database database;
+    private final Cache cache;
 
     private List<Account> accounts;
     private List<Currency> currencies;
-    private List<Category> categories;
 
     public MainFrame(Database db) {
         database = db;
+        cache = new Cache(db);
+
         newAccountButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
@@ -51,7 +54,7 @@ public class MainFrame {
                 dialog.setVisible(true);
             }
         });
-        accountSettingsButton.addActionListener(new ActionListener() {
+        editAccountButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 AccountSettingsDialog dialog = new AccountSettingsDialog();
@@ -91,9 +94,10 @@ public class MainFrame {
         loadAccounts();
 
         initDashboardTab();
-        initTransactionsTab();
         initCategoriesTab();
         initCurrenciesTab();
+        // NOTE: load transactions last to improve cache hits with categories
+        initTransactionsTab();
 
         refreshDashboardBalances();
     }
@@ -120,7 +124,7 @@ public class MainFrame {
     private void initTransactionsTab() {
         DefaultListModel<String> model = new DefaultListModel<>();
         try {
-            List<Account> accounts = database.getAllAccounts();
+            List<Account> accounts = cache.getAllAccounts();
             accountsList.removeAll();
             for (Account account : accounts) {
                 model.addElement(account.getName());
@@ -128,16 +132,39 @@ public class MainFrame {
             accountsList.setModel(model);
             accountsList.setSelectedIndex(0);
         } catch (DatabaseError e) {
-            System.out.println(e.getMessage());
+            System.out.println("Failed to load accounts: " + e.getMessage());
         }
     }
 
     private void initCategoriesTab() {
-        // TODO
+        try {
+            List<Category> categories = cache.getAllCategories();
+            DefaultTableModel model = (DefaultTableModel)categoriesTable.getModel();
+            model.setRowCount(0);
+            for (Category c : categories) {
+                String name = c.getName();
+                String type = c.getType().toFriendlyString();
+                String group = c.getGroup().toFriendlyString();
+                model.addRow(new Object[]{name, type, group});
+            }
+        } catch (DatabaseError e) {
+            System.out.println("Failed to load categories: " + e.getMessage());
+        }
     }
 
     private void initCurrenciesTab() {
-        // TODO
+        try {
+            List<Currency> currencies = cache.getAllCurrencies();
+            DefaultTableModel model = (DefaultTableModel)currenciesTable.getModel();
+            model.setRowCount(0);
+            for (Currency c : currencies) {
+                String code = c.getCode();
+                String symbol = c.getSymbol();
+                model.addRow(new Object[]{code, symbol});
+            }
+        } catch (DatabaseError e) {
+            System.out.println("Failed to load currencies: " + e.getMessage());
+        }
     }
 
     private void initTableHeaders() {
@@ -155,25 +182,30 @@ public class MainFrame {
         model.addColumn("Info");
 
         // categories table
-        // TODO
+        model = (DefaultTableModel)categoriesTable.getModel();
+        model.addColumn("Category");
+        model.addColumn("Type");
+        model.addColumn("Group");
 
         // currencies table
-        // TODO
+        model = (DefaultTableModel)currenciesTable.getModel();
+        model.addColumn("Code");
+        model.addColumn("Symbol");
     }
 
     private void loadCurrencies() {
         try {
-            currencies = database.getAllCurrencies();
+            currencies = cache.getAllCurrencies();
         } catch (DatabaseError e) {
-            System.out.println(e.getMessage());
+            System.out.println("Failed to load currencies: " + e.getMessage());
         }
     }
 
     private void loadAccounts() {
         try {
-            accounts = database.getAllAccounts();
+            accounts = cache.getAllAccounts();
         } catch (DatabaseError e) {
-            System.out.println(e.getMessage());
+            System.out.println("Failed to load accounts: " + e.getMessage());
         }
     }
 
@@ -186,7 +218,7 @@ public class MainFrame {
             try {
                 balanceAmount = database.getAccountBalance(a.getId()).toString();
             } catch (DatabaseError e) {
-                System.out.println(e.getMessage());
+                System.out.println("Failed to fetch account balance: " + e.getMessage());
             }
             String balance = a.getCurrency().getSymbol() + " " + balanceAmount;
             model.addRow(new Object[]{name, balance});
@@ -204,18 +236,22 @@ public class MainFrame {
         try {
             List<Transaction> transactions = database.getTransactionsForAccount(account.getId());
             for (Transaction t : transactions) {
-                String date = t.getDate().toString();
+                String date = t.getDate().toString();  // TODO use local format
                 String amount = t.getAmount().toString();
-                String category = t.getCategoryName();
-                String transferAccount = t.getTransferAccountName();
-                if (transferAccount == null) {
+                String category = cache.getCategory(t.getCategoryId()).getName();
+                Integer transferAccountId = t.getTransferAccountId();
+
+                String transferAccount;
+                if (transferAccountId == null) {
                     transferAccount = "";
+                } else {
+                    transferAccount = cache.getAccount(transferAccountId).getName();
                 }
                 String info = t.getInfo();
                 model.addRow(new Object[]{date, amount, category, transferAccount, info});
             }
         } catch (DatabaseError e) {
-            System.out.println(e.getMessage());
+            System.out.println("Failed to load transactions: " + e.getMessage());
         }
     }
 }
