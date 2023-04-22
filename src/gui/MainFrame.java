@@ -10,6 +10,7 @@ import javax.swing.DefaultListModel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
+import java.text.SimpleDateFormat;
 
 import controller.Cache;
 import database.Database;
@@ -214,13 +215,14 @@ public class MainFrame {
         model.setRowCount(0);
         for (Account a : accounts) {
             String name = a.getName();
-            String balanceAmount = "0.00";
+            String balance = "0.00";
             try {
-                balanceAmount = database.getAccountBalance(a.getId()).toString();
+                Decimal balanceAmount = database.getAccountBalance(a.getId());
+                Currency currency = cache.getCurrency(a.getCurrencyId());
+                balance = currency.getSymbol() + " " + balanceAmount.toString();
             } catch (DatabaseError e) {
                 System.out.println("Failed to fetch account balance: " + e.getMessage());
             }
-            String balance = a.getCurrency().getSymbol() + " " + balanceAmount;
             model.addRow(new Object[]{name, balance});
         }
     }
@@ -233,11 +235,13 @@ public class MainFrame {
     private void populateTransactionsForAccount(Account account) {
         DefaultTableModel model = (DefaultTableModel)transactionsTable.getModel();
         model.setRowCount(0);
+        SimpleDateFormat fmt = new SimpleDateFormat("dd MMM yyyy E");
         try {
+            Currency currency = cache.getCurrency(account.getCurrencyId());
             List<Transaction> transactions = database.getTransactionsForAccount(account.getId());
             for (Transaction t : transactions) {
-                String date = t.getDate().toString();  // TODO use local format
-                String amount = t.getAmount().toString();
+                String date = fmt.format(t.getDate());
+                String amount = currency.getSymbol() + " " + t.getAmount().toString();
                 String category = cache.getCategory(t.getCategoryId()).getName();
                 Integer transferAccountId = t.getTransferAccountId();
 

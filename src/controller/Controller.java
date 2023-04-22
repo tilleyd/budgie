@@ -16,7 +16,7 @@ public class Controller {
 
     Account createAccount(String name, String institution, Currency currency) throws DatabaseError {
         int id = db.createAccount(name, institution, currency);
-        return new Account(id, name, institution, currency);
+        return new Account(id, name, institution, currency.getId());
     }
 
     void updateAccount(int id, String name, String institution) throws DatabaseError {
@@ -88,7 +88,7 @@ public class Controller {
         if (from == to) {
             throw new LogicError("Cannot create transfer into same account");
         }
-        if (from.getCurrency().equals(to.getCurrency()) && !fromAmount.equals(toAmount)) {
+        if (from.getCurrencyId() == to.getCurrencyId() && !fromAmount.equals(toAmount)) {
             throw new LogicError("Transfers of same currency must have an equal amount");
         }
         if (fromAmount.isZero() || toAmount.isZero()) {

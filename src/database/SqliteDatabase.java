@@ -51,18 +51,18 @@ public class SqliteDatabase implements Database {
     public List<Account> getAllAccounts() throws DatabaseError {
         assertConnection();
 
-        String sql = "SELECT account_id, name, institution, currency, code, symbol FROM accounts INNER JOIN currencies ON currencies.currency_id = accounts.currency";
+        String sql = "SELECT account_id, name, institution, currency FROM accounts";
         try {
             Statement s = connection.createStatement();
             ResultSet rs = s.executeQuery(sql);
 
             ArrayList<Account> accounts = new ArrayList<>();
             while (rs.next()) {
-                Currency currency = new Currency(rs.getInt("currency"), rs.getString("code"), rs.getString("symbol"));
                 int id = rs.getInt("account_id");
                 String name = rs.getString("name");
                 String institution = rs.getString("institution");
-                accounts.add(new Account(id, name, institution, currency));
+                int currencyId = rs.getInt("currency");
+                accounts.add(new Account(id, name, institution, currencyId));
             }
             return accounts;
         } catch (SQLException e) {

@@ -4,13 +4,13 @@ public class Account {
     final private int id;
     final private String name;
     final private String institution;
-    final private Currency currency;
+    final private int currencyId;
 
-    public Account(int id, String name, String institution, Currency currency) {
+    public Account(int id, String name, String institution, int currencyId) {
         this.id = id;
         this.name = name;
         this.institution = institution;
-        this.currency = currency;
+        this.currencyId = currencyId;
     }
 
     public int getId() {
@@ -25,7 +25,7 @@ public class Account {
         return institution;
     }
 
-    public Currency getCurrency() {
-        return currency;
+    public int getCurrencyId() {
+        return currencyId;
     }
 }
