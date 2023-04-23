@@ -51,7 +51,7 @@ public class SqliteDatabase implements Database {
     public List<Account> getAllAccounts() throws DatabaseError {
         assertConnection();
 
-        String sql = "SELECT account_id, name, institution, currency FROM accounts";
+        String sql = "SELECT account_id, name, institution, currency FROM accounts WHERE archived = FALSE";
         try {
             Statement s = connection.createStatement();
             ResultSet rs = s.executeQuery(sql);
@@ -62,7 +62,7 @@ public class SqliteDatabase implements Database {
                 String name = rs.getString("name");
                 String institution = rs.getString("institution");
                 int currencyId = rs.getInt("currency");
-                accounts.add(new Account(id, name, institution, currencyId));
+                accounts.add(new Account(id, name, institution, false, currencyId));
             }
             return accounts;
         } catch (SQLException e) {
@@ -72,32 +72,109 @@ public class SqliteDatabase implements Database {
 
     @Override
     public Account getAccount(int id) throws DatabaseError {
-        // TODO
-        throw new DatabaseError("getAccount not implemented");
+        assertConnection();
+
+        String sql = "SELECT name, institution, archived, currency FROM accounts WHERE account_id = ?";
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setInt(1, id);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                String name = rs.getString("name");
+                String institution = rs.getString("institution");
+                boolean archived = rs.getBoolean("archived");
+                int currencyId = rs.getInt("currency");
+                return new Account(id, name, institution, archived, currencyId);
+            } else {
+                return null;
+            }
+        } catch (SQLException e) {
+            throw new DatabaseError(e.getMessage());
+        }
     }
 
     @Override
-    public int createAccount(String name, String institution, Currency currency) throws DatabaseError {
-        // TODO
-        throw new DatabaseError("createAccount not implemented");
+    public int createAccount(String name, String institution, int currencyId) throws DatabaseError {
+        assertConnection();
+
+        String sql = "INSERT INTO accounts (name, institution, archived, currency) VALUES (?, ?, FALSE, ?)";
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, name);
+            ps.setString(2, institution);
+            ps.setInt(3, currencyId);
+
+            int affectedRows = ps.executeUpdate();
+            if (affectedRows == 0) {
+                throw new DatabaseError("Account creation failed (no rows affected)");
+            }
+
+            ResultSet keys = ps.getGeneratedKeys();
+            if (keys.next()) {
+                return keys.getInt(1);
+            } else {
+                throw new DatabaseError("Account creation failed (no ID returned)");
+            }
+        } catch (SQLException e) {
+            throw new DatabaseError(e.getMessage());
+        }
     }
 
     @Override
     public void updateAccount(int id, String name, String institution) throws DatabaseError {
-        // TODO
-        throw new DatabaseError("updateAccount not implemented");
+        assertConnection();
+
+        String sql = "UPDATE accounts SET name = ?, institution = ? WHERE account_id = ?";
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setString(1, name);
+            ps.setString(2, institution);
+            ps.setInt(3, id);
+
+            int affectedRows = ps.executeUpdate();
+            if (affectedRows == 0) {
+                throw new DatabaseError("Account update failed (no rows affected)");
+            }
+        } catch (SQLException e) {
+            throw new DatabaseError(e.getMessage());
+        }
     }
 
     @Override
     public void archiveAccount(int id) throws DatabaseError {
-        // TODO
-        throw new DatabaseError("archiveAccount not implemented");
+        assertConnection();
+
+        String sql = "UPDATE accounts SET archived = TRUE WHERE account_id = ?";
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setInt(1, id);
+
+            int affectedRows = ps.executeUpdate();
+            if (affectedRows == 0) {
+                throw new DatabaseError("Account archival failed (no rows affected)");
+            }
+        } catch (SQLException e) {
+            throw new DatabaseError(e.getMessage());
+        }
     }
 
     @Override
     public void deleteAccount(int id) throws DatabaseError {
-        // TODO
-        throw new DatabaseError("deleteAccount not implemented");
+        assertConnection();
+
+        String sql = "DELETE FROM accounts WHERE account_id = ?";
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setInt(1, id);
+
+            int affectedRows = ps.executeUpdate();
+            if (affectedRows == 0) {
+                throw new DatabaseError("Account deletion failed (no rows affected)");
+            }
+        } catch (SQLException e) {
+            throw new DatabaseError(e.getMessage());
+        }
     }
 
     @Override

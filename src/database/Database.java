@@ -10,7 +10,7 @@ public interface Database {
 
     Account getAccount(int id) throws DatabaseError;
 
-    int createAccount(String name, String institution, Currency currency) throws DatabaseError;
+    int createAccount(String name, String institution, int currencyId) throws DatabaseError;
 
     void updateAccount(int id, String name, String institution) throws DatabaseError;
 

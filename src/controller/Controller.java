@@ -14,55 +14,55 @@ public class Controller {
         this.db = db;
     }
 
-    Account createAccount(String name, String institution, Currency currency) throws DatabaseError {
-        int id = db.createAccount(name, institution, currency);
-        return new Account(id, name, institution, currency.getId());
+    public Account createAccount(String name, String institution, Currency currency) throws DatabaseError {
+        int id = db.createAccount(name, institution, currency.getId());
+        return new Account(id, name, institution, false, currency.getId());
     }
 
-    void updateAccount(int id, String name, String institution) throws DatabaseError {
+    public void updateAccount(int id, String name, String institution) throws DatabaseError {
         db.updateAccount(id, name, institution);
     }
 
-    void archiveAccount(int id) throws DatabaseError {
+    public void archiveAccount(int id) throws DatabaseError {
         db.archiveAccount(id);
     }
 
-    void deleteAccount(int id) throws DatabaseError {
-        // TODO delete all transactions from account
-        // TODO remove references from transfer transactions
-        throw new DatabaseError("deleteAccount not implemented yet");
-        // db.deleteAccount(id);
+    public void deleteAccount(int id) throws DatabaseError, LogicError {
+        if (db.getTransactionsForAccount(id).size() > 0) {
+            throw new LogicError("Cannot delete account with transactions. Use archive instead.");
+        }
+        db.deleteAccount(id);
     }
 
-    Category createCategory(String name, CategoryType type, CategoryGroup group) throws DatabaseError {
+    public Category createCategory(String name, CategoryType type, CategoryGroup group) throws DatabaseError {
         int id = db.createCategory(name, type, group);
         return new Category(id, name, type, group);
     }
 
-    void updateCategory(int id, String name, CategoryType type, CategoryGroup group) throws DatabaseError {
+    public void updateCategory(int id, String name, CategoryType type, CategoryGroup group) throws DatabaseError {
         db.updateCategory(id, name, type, group);
     }
 
-    void deleteCategory(int id) throws DatabaseError {
+    public void deleteCategory(int id) throws DatabaseError {
         // TODO check if any transactions use it first
         db.deleteCategory(id);
     }
 
-    Currency createCurrency(String code, String symbol) throws DatabaseError {
+    public Currency createCurrency(String code, String symbol) throws DatabaseError {
         int id = db.createCurrency(code, symbol);
         return new Currency(id, code, symbol);
     }
 
-    void updateCurrency(int id, String code, String symbol) throws DatabaseError {
+    public void updateCurrency(int id, String code, String symbol) throws DatabaseError {
         db.updateCurrency(id, code, symbol);
     }
 
-    void deleteCurrency(int id) throws DatabaseError {
+    public void deleteCurrency(int id) throws DatabaseError {
         // TODO check if any accounts use it first
         db.deleteCurrency(id);
     }
 
-    Transaction createSimpleTransaction(
+    public Transaction createSimpleTransaction(
             Category category,
             Account account,
             Decimal amount,
@@ -76,7 +76,7 @@ public class Controller {
         return new Transaction(id, category.getId(), amount, date, info, null, null);
     }
 
-    Transaction[] createTransferTransaction(
+    public Transaction[] createTransferTransaction(
             Category category,
             Account from,
             Account to,
@@ -106,7 +106,7 @@ public class Controller {
         return new Transaction[]{fromTransaction, toTransaction};
     }
 
-    void updateTransaction(
+    public void updateTransaction(
             int id,
             Category category,
             Account account,
@@ -117,7 +117,7 @@ public class Controller {
         db.updateTransaction(id, category, account, amount, date, info);
     }
 
-    void deleteTransaction(int id) throws DatabaseError {
+    public void deleteTransaction(int id) throws DatabaseError {
         db.deleteTransaction(id);
     }
 }

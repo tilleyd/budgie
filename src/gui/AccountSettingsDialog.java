@@ -2,6 +2,9 @@ package gui;
 
 import javax.swing.*;
 import java.awt.event.*;
+import java.util.List;
+
+import model.*;
 
 public class AccountSettingsDialog extends JDialog {
     private JPanel contentPane;
@@ -11,22 +14,40 @@ public class AccountSettingsDialog extends JDialog {
     private JTextField institutionField;
     private JButton archiveButton;
     private JButton deleteButton;
-    private JComboBox currencyBox;
+    private JTextField currencyField;
 
-    public AccountSettingsDialog() {
+    private String closeOperation = "CANCEL";
+
+    public AccountSettingsDialog(Account account, String currencyCode) {
         setContentPane(contentPane);
         setModal(true);
         getRootPane().setDefaultButton(saveButton);
 
+        nameField.setText(account.getName());
+        institutionField.setText(account.getInstitution());
+        currencyField.setText(currencyCode);
+
         saveButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                onOK();
+                onSave();
             }
         });
 
         cancelButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 onCancel();
+            }
+        });
+
+        deleteButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                onDelete();
+            }
+        });
+
+        archiveButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                onArchive();
             }
         });
 
@@ -46,13 +67,38 @@ public class AccountSettingsDialog extends JDialog {
         }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
     }
 
-    private void onOK() {
-        // add your code here
+    public String getCloseOperation() {
+        return closeOperation;
+    }
+
+    public String getName() {
+        return nameField.getText();
+    }
+
+    public String getInstitution() {
+        return institutionField.getText();
+    }
+
+    private void onSave() {
+        closeOperation = "SAVE";
+        // TODO validate form
         dispose();
     }
 
     private void onCancel() {
-        // add your code here if necessary
+        closeOperation = "CANCEL";
+        dispose();
+    }
+
+    private void onDelete() {
+        // TODO confirm
+        closeOperation = "DELETE";
+        dispose();
+    }
+
+    private void onArchive() {
+        // TODO confirm
+        closeOperation = "ARCHIVE";
         dispose();
     }
 }
