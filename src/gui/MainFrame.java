@@ -68,9 +68,7 @@ public class MainFrame {
         addTransactionButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
-                NewTransactionDialog dialog = new NewTransactionDialog();
-                dialog.pack();
-                dialog.setVisible(true);
+                promptAddTransaction();
             }
         });
         tabbedPane.addChangeListener(new ChangeListener() {
@@ -78,7 +76,7 @@ public class MainFrame {
             public void stateChanged(ChangeEvent changeEvent) {
                 int idx = tabbedPane.getSelectedIndex();
                 if (idx == 0) {
-                    refreshAccountBalances();
+                    refreshAccountsTable();
                     calculateOverallBalance();
                 }
             }
@@ -89,10 +87,7 @@ public class MainFrame {
                 if (e.getValueIsAdjusting()) {
                     return;
                 }
-                if (accountsList.getSelectedIndex() < 0) {
-                    return;
-                }
-                populateTransactionsForAccount(accounts.get(accountsList.getSelectedIndex()));
+                refreshTransactions();
             }
         });
 
@@ -158,6 +153,21 @@ public class MainFrame {
             System.out.println("Failed to load accounts: " + e.getMessage());
         }
 
+        refreshAccountsTable();
+        calculateOverallBalance();
+        balanceField.setText("Unimplemented");
+    }
+
+    private void refreshTransactions() {
+        int selectedIdx = accountsList.getSelectedIndex();
+        if (selectedIdx >= 0) {
+            populateTransactionsForAccount(accounts.get(selectedIdx));
+        } else {
+            populateTransactionsForAccount(null);
+        }
+    }
+
+    private void refreshAccountsTable() {
         // clear the table
         DefaultTableModel tableModel = (DefaultTableModel)accountsTable.getModel();
         tableModel.setRowCount(0);
@@ -184,13 +194,6 @@ public class MainFrame {
             }
             accountsList.setModel(listModel);
         }
-
-        calculateOverallBalance();
-        balanceField.setText("Unimplemented");
-    }
-
-    private void refreshAccountBalances() {
-        // TODO only update the account balance values
     }
 
     private void calculateOverallBalance() {
@@ -234,6 +237,10 @@ public class MainFrame {
     private void populateTransactionsForAccount(Account account) {
         DefaultTableModel model = (DefaultTableModel)transactionsTable.getModel();
         model.setRowCount(0);
+        if (account == null) {
+            return;
+        }
+
         SimpleDateFormat fmt = new SimpleDateFormat("dd MMM yyyy E");
         try {
             Currency currency = cache.getCurrency(account.getCurrencyId());
@@ -324,5 +331,14 @@ public class MainFrame {
                 JOptionPane.showMessageDialog(getRoot(), e.getMessage(), "Create Failed", JOptionPane.ERROR_MESSAGE);
             }
         }
+    }
+
+    private void promptAddTransaction() {
+        NewTransactionDialog dialog = new NewTransactionDialog(controller, cache);
+        dialog.pack();
+        dialog.setLocationRelativeTo(addTransactionButton);
+        dialog.setVisible(true);
+
+        refreshTransactions();
     }
 }

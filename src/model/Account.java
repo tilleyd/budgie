@@ -34,4 +34,9 @@ public class Account {
     public int getCurrencyId() {
         return currencyId;
     }
+
+    @Override
+    public String toString() {
+        return name;
+    }
 }

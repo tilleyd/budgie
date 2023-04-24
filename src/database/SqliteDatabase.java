@@ -303,8 +303,32 @@ public class SqliteDatabase implements Database {
             Date date,
             String info
     ) throws DatabaseError {
-        // TODO
-        throw new DatabaseError("createTransaction not implemented");
+        assertConnection();
+
+        String sql = "INSERT INTO transactions (category, account, amount, date, info) VALUES (?, ?, ?, ?, ?)";
+        SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd");
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            ps.setInt(1, category.getId());
+            ps.setInt(2, account.getId());
+            ps.setLong(3, amount.getValue());
+            ps.setString(4, fmt.format(date));
+            ps.setString(5, info);
+
+            int affectedRows = ps.executeUpdate();
+            if (affectedRows == 0) {
+                throw new DatabaseError("Account creation failed (no rows affected)");
+            }
+
+            ResultSet keys = ps.getGeneratedKeys();
+            if (keys.next()) {
+                return keys.getInt(1);
+            } else {
+                throw new DatabaseError("Account creation failed (no ID returned)");
+            }
+        } catch (SQLException e) {
+            throw new DatabaseError(e.getMessage());
+        }
     }
 
     @Override

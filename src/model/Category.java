@@ -36,4 +36,9 @@ public class Category {
     public boolean expenseAllowed() {
         return type == CategoryType.EXPENSE || type == CategoryType.INCOME_OR_EXPENSE;
     }
+
+    @Override
+    public String toString() {
+        return name;
+    }
 }
