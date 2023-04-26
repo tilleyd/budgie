@@ -347,8 +347,20 @@ public class SqliteDatabase implements Database {
 
     @Override
     public void deleteTransaction(int id) throws DatabaseError {
-        // TODO
-        throw new DatabaseError("deleteTransaction not implemented");
+        assertConnection();
+
+        String sql = "DELETE FROM transactions WHERE transaction_id = ?";
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setInt(1, id);
+
+            int affectedRows = ps.executeUpdate();
+            if (affectedRows == 0) {
+                throw new DatabaseError("Transaction deletion failed (no rows affected)");
+            }
+        } catch (SQLException e) {
+            throw new DatabaseError(e.getMessage());
+        }
     }
 
     @Override

@@ -117,7 +117,10 @@ public class Controller {
         db.updateTransaction(id, category, account, amount, date, info);
     }
 
-    public void deleteTransaction(int id) throws DatabaseError {
-        db.deleteTransaction(id);
+    public void deleteTransaction(Transaction transaction) throws DatabaseError {
+        db.deleteTransaction(transaction.getId());
+        if (transaction.getTransferTransactionId() != null) {
+            db.deleteTransaction(transaction.getTransferTransactionId());
+        }
     }
 }

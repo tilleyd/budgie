@@ -16,7 +16,7 @@ import database.DatabaseError;
 public class NewTransactionDialog extends JDialog {
     private JPanel contentPane;
     private JButton addButton;
-    private JButton cancelButton;
+    private JButton closeButton;
     private JCheckBox keepOpenCheckBox;
     private JTabbedPane tabbedPane;
     private JTextField expenseInfoField;
@@ -65,24 +65,24 @@ public class NewTransactionDialog extends JDialog {
             }
         });
 
-        cancelButton.addActionListener(new ActionListener() {
+        closeButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                onCancel();
+                onClose();
             }
         });
 
-        // call onCancel() when cross is clicked
+        // call onClose() when cross is clicked
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
-                onCancel();
+                onClose();
             }
         });
 
-        // call onCancel() on ESCAPE
+        // call onClose() on ESCAPE
         contentPane.registerKeyboardAction(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                onCancel();
+                onClose();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
@@ -163,7 +163,7 @@ public class NewTransactionDialog extends JDialog {
 
     }
 
-    private void onCancel() {
+    private void onClose() {
         dispose();
     }
 

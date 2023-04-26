@@ -7,6 +7,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.DefaultListModel;
+import javax.xml.crypto.Data;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -47,6 +48,7 @@ public class MainFrame {
     private List<Account> accounts;
     private List<Currency> currencies;
     private List<Category> categories;
+    private List<Transaction> transactions;
 
     public MainFrame(Database db) {
         database = db;
@@ -88,6 +90,12 @@ public class MainFrame {
                     return;
                 }
                 refreshTransactions();
+            }
+        });
+        deleteTransactionButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                onDeleteTransaction();
             }
         });
 
@@ -238,13 +246,14 @@ public class MainFrame {
         DefaultTableModel model = (DefaultTableModel)transactionsTable.getModel();
         model.setRowCount(0);
         if (account == null) {
+            transactions = null;
             return;
         }
 
         SimpleDateFormat fmt = new SimpleDateFormat("dd MMM yyyy E");
         try {
             Currency currency = cache.getCurrency(account.getCurrencyId());
-            List<Transaction> transactions = database.getTransactionsForAccount(account.getId());
+            transactions = database.getTransactionsForAccount(account.getId());
             for (Transaction t : transactions) {
                 String date = fmt.format(t.getDate());
                 String amount = currency.getSymbol() + " " + t.getAmount().toString();
@@ -340,5 +349,28 @@ public class MainFrame {
         dialog.setVisible(true);
 
         refreshTransactions();
+    }
+
+    private void onDeleteTransaction() {
+        int selectedIdx = transactionsTable.getSelectedRow();
+        if (selectedIdx < 0 || transactions == null) {
+            return;
+        }
+
+        Transaction transaction = transactions.get(selectedIdx);
+
+        String message = "Delete transaction with value " + transaction.getAmount().toString() + "?";
+        if (transaction.getTransferTransactionId() != null) {
+            message = message + " This will also delete the transaction from the transferred account.";
+        }
+        int confirmation = JOptionPane.showConfirmDialog(getRoot(), message, "Delete Transaction", JOptionPane.YES_NO_OPTION);
+        if (confirmation == JOptionPane.YES_OPTION) {
+            try {
+                controller.deleteTransaction(transaction);
+                refreshTransactions();
+            } catch (DatabaseError e) {
+                JOptionPane.showMessageDialog(getRoot(), "Deletion failed: " + e.getMessage(), "Internal Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
 }
