@@ -88,14 +88,14 @@ public class Controller {
         if (from == to) {
             throw new LogicError("Cannot create transfer into same account");
         }
-        if (from.getCurrencyId() == to.getCurrencyId() && !fromAmount.equals(toAmount)) {
-            throw new LogicError("Transfers of same currency must have an equal amount");
-        }
         if (fromAmount.isZero() || toAmount.isZero()) {
             throw new LogicError("Zero amount transfers are not allowed");
         }
         if (fromAmount.isPositive() || toAmount.isNegative()) {
             throw new LogicError("From amount must be negative and to amount must be positive");
+        }
+        if (from.getCurrencyId() == to.getCurrencyId() && !fromAmount.equals(toAmount.negate())) {
+            throw new LogicError("Transfers of same currency must have an equal amount");
         }
 
         int[] ids = db.createTransferTransaction(category.getId(), from.getId(), to.getId(), fromAmount, toAmount, date, info);

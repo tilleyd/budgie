@@ -275,7 +275,72 @@ public class NewTransactionDialog extends JDialog {
     }
 
     private boolean onAddTransfer() {
-        // TODO
+        Account fromAccount = (Account)transferFromAccountBox.getSelectedItem();
+        if (fromAccount == null) {
+            JOptionPane.showMessageDialog(this, "No from account selected", "Validation Failed", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+        Account toAccount = (Account)transferToAccountBox.getSelectedItem();
+        if (toAccount == null) {
+            JOptionPane.showMessageDialog(this, "No to account selected", "Validation Failed", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
+        Category category = (Category)transferCategoryBox.getSelectedItem();
+        if (category == null) {
+            JOptionPane.showMessageDialog(this, "No category selected", "Validation Failed", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
+        Date date;
+        try {
+            int day = Integer.parseInt(transferDayField.getText());
+            int month = Integer.parseInt(transferMonthField.getText());
+            int year = Integer.parseInt(transferYearField.getText());
+            Calendar calendar = Calendar.getInstance();
+            //noinspection MagicConstant
+            calendar.set(year, month - 1, day);
+            date = calendar.getTime();
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Invalid date value: " + e.getMessage(), "Validation Failed", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
+        Decimal outAmount;
+        try {
+            outAmount = Decimal.parse(transferOutAmountField.getText());
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Invalid out amount value: " + e.getMessage(), "Validation Failed", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+        if (outAmount.isPositive()) {
+            outAmount = outAmount.negate();
+        }
+
+        Decimal inAmount;
+        try {
+            inAmount = Decimal.parse(transferInAmountField.getText());
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Invalid in amount value: " + e.getMessage(), "Validation Failed", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+        if (inAmount.isNegative()) {
+            JOptionPane.showMessageDialog(this, "In amount must be positive", "Validation Failed", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
+        String info = transferInfoField.getText();
+
+        try {
+            controller.createTransferTransaction(category, fromAccount, toAccount, outAmount, inAmount, date, info);
+        } catch (DatabaseError e) {
+            JOptionPane.showMessageDialog(this, "Failed to create transaction: " + e.getMessage(), "Internal Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        } catch (LogicError e) {
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Validation Failed", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
         return true;
     }
 

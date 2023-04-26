@@ -13,6 +13,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.Types;
 
 public class SqliteDatabase implements Database {
     String path;
@@ -317,14 +318,14 @@ public class SqliteDatabase implements Database {
 
             int affectedRows = ps.executeUpdate();
             if (affectedRows == 0) {
-                throw new DatabaseError("Account creation failed (no rows affected)");
+                throw new DatabaseError("Transaction creation failed (no rows affected)");
             }
 
             ResultSet keys = ps.getGeneratedKeys();
             if (keys.next()) {
                 return keys.getInt(1);
             } else {
-                throw new DatabaseError("Account creation failed (no ID returned)");
+                throw new DatabaseError("Transaction creation failed (no ID returned)");
             }
         } catch (SQLException e) {
             throw new DatabaseError(e.getMessage());
@@ -360,8 +361,71 @@ public class SqliteDatabase implements Database {
             Date date,
             String info
     ) throws DatabaseError {
-        // TODO
-        throw new DatabaseError("createTransferTransaction not implemented");
+        String insertSql = "INSERT INTO transactions (category, account, amount, date, info, transfer_account, transfer_transaction) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String updateSql = "UPDATE transactions SET transfer_transaction = ? WHERE transaction_id = ?";
+        SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd");
+
+        try {
+            PreparedStatement insertPs = connection.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS);
+            PreparedStatement updatePs = connection.prepareStatement(updateSql);
+
+            // first insert the outgoing transaction
+            insertPs.setInt(1, category);
+            insertPs.setInt(2, fromAccount);
+            insertPs.setLong(3, fromAmount.getValue());
+            insertPs.setString(4, fmt.format(date));
+            insertPs.setString(5, info);
+            insertPs.setInt(6, toAccount);
+            insertPs.setNull(7, Types.INTEGER); // temporarily set this to null
+
+            int affectedRows = insertPs.executeUpdate();
+            if (affectedRows == 0) {
+                throw new DatabaseError("Outgoing transaction creation failed (no rows affected)");
+            }
+
+            ResultSet keys = insertPs.getGeneratedKeys();
+            int fromId;
+            if (keys.next()) {
+                fromId = keys.getInt(1);
+            } else {
+                throw new DatabaseError("Outgoing transaction creation failed (no ID returned)");
+            }
+
+            // now create the incoming transaction
+            insertPs.setInt(1, category);
+            insertPs.setInt(2, toAccount);
+            insertPs.setLong(3, toAmount.getValue());
+            insertPs.setString(4, fmt.format(date));
+            insertPs.setString(5, info);
+            insertPs.setInt(6, fromAccount);
+            insertPs.setInt(7, fromId);
+
+            affectedRows = insertPs.executeUpdate();
+            if (affectedRows == 0) {
+                throw new DatabaseError("Incoming transaction creation failed (no rows affected)");
+            }
+
+            keys = insertPs.getGeneratedKeys();
+            int toId;
+            if (keys.next()) {
+                toId = keys.getInt(1);
+            } else {
+                throw new DatabaseError("Incoming transaction creation failed (no ID returned)");
+            }
+
+            // finally update the transfer transaction ID of the outgoing transaction
+            updatePs.setInt(1, toId);
+            updatePs.setInt(2, fromId);
+
+            affectedRows = updatePs.executeUpdate();
+            if (affectedRows == 0) {
+                throw new DatabaseError("Transfer update step failed (no rows affected)");
+            }
+
+            return new int[]{fromId, toId};
+        } catch (SQLException e) {
+            throw new DatabaseError(e.getMessage());
+        }
     }
 
     @Override
