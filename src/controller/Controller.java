@@ -5,7 +5,6 @@ import database.DatabaseError;
 import model.*;
 
 import java.util.Date;
-import java.util.List;
 
 public class Controller {
     final private Database db;
@@ -43,8 +42,10 @@ public class Controller {
         db.updateCategory(id, name, type, group);
     }
 
-    public void deleteCategory(int id) throws DatabaseError {
-        // TODO check if any transactions use it first
+    public void deleteCategory(int id) throws DatabaseError, LogicError {
+        if (db.getTransactionsForCategory(id).size() > 0) {
+            throw new LogicError("Cannot delete category with transactions.");
+        }
         db.deleteCategory(id);
     }
 
@@ -73,7 +74,7 @@ public class Controller {
             throw new LogicError("Zero amount transactions are not allowed");
         }
         int id = db.createTransaction(category, account, amount, date, info);
-        return new Transaction(id, category.getId(), amount, date, info, null, null);
+        return new Transaction(id, account.getId(), category.getId(), amount, date, info, null, null);
     }
 
     public Transaction[] createTransferTransaction(
@@ -101,8 +102,8 @@ public class Controller {
         int[] ids = db.createTransferTransaction(category.getId(), from.getId(), to.getId(), fromAmount, toAmount, date, info);
         int fromId = ids[0];
         int toId = ids[1];
-        Transaction fromTransaction = new Transaction(fromId, category.getId(), fromAmount, date, info, to.getId(), toId);
-        Transaction toTransaction = new Transaction(toId, category.getId(), toAmount, date, info, from.getId(), fromId);
+        Transaction fromTransaction = new Transaction(fromId, from.getId(), category.getId(), fromAmount, date, info, to.getId(), toId);
+        Transaction toTransaction = new Transaction(toId, to.getId(), category.getId(), toAmount, date, info, from.getId(), fromId);
         return new Transaction[]{fromTransaction, toTransaction};
     }
 

@@ -200,20 +200,68 @@ public class SqliteDatabase implements Database {
 
     @Override
     public int createCategory(String name, CategoryType type, CategoryGroup group) throws DatabaseError {
-        // TODO
-        throw new DatabaseError("createCategory not implemented");
+        assertConnection();
+
+        String sql = "INSERT INTO categories (name, \"type\", \"group\") VALUES (?, ?, ?)";
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, name);
+            ps.setInt(2, type.getId());
+            ps.setInt(3, group.getId());
+
+            int affectedRows = ps.executeUpdate();
+            if (affectedRows == 0) {
+                throw new DatabaseError("Category creation failed (no rows affected)");
+            }
+
+            ResultSet keys = ps.getGeneratedKeys();
+            if (keys.next()) {
+                return keys.getInt(1);
+            } else {
+                throw new DatabaseError("Category creation failed (no ID returned)");
+            }
+        } catch (SQLException e) {
+            throw new DatabaseError(e.getMessage());
+        }
     }
 
     @Override
     public void updateCategory(int id, String name, CategoryType type, CategoryGroup group) throws DatabaseError {
-        // TODO
-        throw new DatabaseError("updateCategory not implemented");
+        assertConnection();
+
+        String sql = "UPDATE categories SET name = ?, \"type\" = ?, \"group\" = ? WHERE category_id = ?";
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, name);
+            ps.setInt(2, type.getId());
+            ps.setInt(3, group.getId());
+            ps.setInt(4, id);
+
+            int affectedRows = ps.executeUpdate();
+            if (affectedRows == 0) {
+                throw new DatabaseError("Category update failed (no rows affected)");
+            }
+        } catch (SQLException e) {
+            throw new DatabaseError(e.getMessage());
+        }
     }
 
     @Override
     public void deleteCategory(int id) throws DatabaseError {
-        // TODO only if no transactions use it
-        throw new DatabaseError("deleteCategory not implemented");
+        assertConnection();
+
+        String sql = "DELETE FROM categories WHERE category_id = ?";
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setInt(1, id);
+
+            int affectedRows = ps.executeUpdate();
+            if (affectedRows == 0) {
+                throw new DatabaseError("Category deletion failed (no rows affected)");
+            }
+        } catch (SQLException e) {
+            throw new DatabaseError(e.getMessage());
+        }
     }
 
     @Override
@@ -450,8 +498,7 @@ public class SqliteDatabase implements Database {
     public List<Transaction> getTransactionsForAccount(int accountId) throws DatabaseError {
         assertConnection();
 
-        String sql = "SELECT transaction_id, category, amount, account, date, info, transfer_account, " +
-                "transfer_transaction FROM transactions " +
+        String sql = "SELECT transaction_id, category, amount, date, info, transfer_account, transfer_transaction FROM transactions " +
                 "WHERE account = ? " +
                 "ORDER BY date DESC";
         try {
@@ -476,7 +523,45 @@ public class SqliteDatabase implements Database {
                     throw new DatabaseError("Failed to parse date");
                 }
 
-                Transaction transaction = new Transaction(id, categoryId, amount, date, info, transferAccountId, transferTransactionId);
+                Transaction transaction = new Transaction(id, accountId, categoryId, amount, date, info, transferAccountId, transferTransactionId);
+                transactions.add(transaction);
+            }
+            return transactions;
+        } catch (SQLException e) {
+            throw new DatabaseError(e.getMessage());
+        }
+    }
+
+    @Override
+    public List<Transaction> getTransactionsForCategory(int categoryId) throws DatabaseError {
+        assertConnection();
+
+        String sql = "SELECT transaction_id, amount, account, date, info, transfer_account, transfer_transaction FROM transactions " +
+                "WHERE category = ? " +
+                "ORDER BY date DESC";
+        try {
+            PreparedStatement ps = connection.prepareStatement(sql);
+            ps.setInt(1, categoryId);
+            ResultSet rs = ps.executeQuery();
+
+            ArrayList<Transaction> transactions = new ArrayList<>();
+            SimpleDateFormat isoFormat = new SimpleDateFormat("yyyy-MM-dd");
+            while (rs.next()) {
+                int id = rs.getInt("transaction_id");
+                int accountId = rs.getInt("account");
+                Integer transferAccountId = (Integer)rs.getObject("transfer_account");
+                Integer transferTransactionId = (Integer)rs.getObject("transfer_transaction");
+                Decimal amount = new Decimal(rs.getInt("amount"));
+                String info = rs.getString("info");
+
+                Date date;
+                try {
+                    date = isoFormat.parse(rs.getString("date"));
+                } catch (ParseException e) {
+                    throw new DatabaseError("Failed to parse date");
+                }
+
+                Transaction transaction = new Transaction(id, accountId, categoryId, amount, date, info, transferAccountId, transferTransactionId);
                 transactions.add(transaction);
             }
             return transactions;

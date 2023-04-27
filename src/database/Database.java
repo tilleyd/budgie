@@ -73,5 +73,7 @@ public interface Database {
 
     List<Transaction> getTransactionsForAccount(int accountId) throws DatabaseError;
 
+    List<Transaction> getTransactionsForCategory(int accountId) throws DatabaseError;
+
     Transaction getTransaction(int id) throws DatabaseError;
 }

@@ -7,7 +7,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.DefaultListModel;
-import javax.xml.crypto.Data;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -39,7 +38,7 @@ public class MainFrame {
     private JComboBox<String> localCurrencyBox;
     private JTable categoriesTable;
     private JButton addCategoryButton;
-    private JButton deleteCategoryButton;
+    private JButton editCategoryButton;
 
     private final Database database;
     private final Controller controller;
@@ -98,6 +97,18 @@ public class MainFrame {
                 onDeleteTransaction();
             }
         });
+        addCategoryButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                onCreateCategory();
+            }
+        });
+        editCategoryButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                onEditCategory();
+            }
+        });
 
         initTableHeaders();
 
@@ -137,16 +148,16 @@ public class MainFrame {
 
     private void refreshCategories() {
         try {
-            List<Category> categories = cache.getAllCategories();
+            categories = cache.getAllCategories();
 
             // update categories table
             DefaultTableModel model = (DefaultTableModel)categoriesTable.getModel();
             model.setRowCount(0);
             for (Category c : categories) {
                 String name = c.getName();
-                String type = c.getType().toFriendlyString();
-                String group = c.getGroup().toFriendlyString();
-                model.addRow(new Object[]{name, type, group});
+                String group = c.getGroup().toString();
+                String type = c.getType().toString();
+                model.addRow(new Object[]{name, group, type});
             }
         } catch (DatabaseError e) {
             System.out.println("Failed to load categories: " + e.getMessage());
@@ -231,8 +242,8 @@ public class MainFrame {
         categoriesTable.setDefaultEditor(Object.class, null);
         model = (DefaultTableModel)categoriesTable.getModel();
         model.addColumn("Category");
-        model.addColumn("Type");
         model.addColumn("Group");
+        model.addColumn("Type");
 
         // currencies table
         currenciesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -370,6 +381,64 @@ public class MainFrame {
                 refreshTransactions();
             } catch (DatabaseError e) {
                 JOptionPane.showMessageDialog(getRoot(), "Deletion failed: " + e.getMessage(), "Internal Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void onCreateCategory() {
+        NewCategoryDialog dialog = new NewCategoryDialog();
+        dialog.pack();
+        dialog.setLocationRelativeTo(addCategoryButton);
+        dialog.setVisible(true);
+
+        String closeOperation = dialog.getCloseOperation();
+        if (closeOperation.equals("CREATE")) {
+            try {
+                String name = dialog.getCategoryName();
+                CategoryType type = dialog.getCategoryType();
+                CategoryGroup group = dialog.getCategoryGroup();
+                controller.createCategory(name, type, group);
+                refreshCategories();
+            } catch (DatabaseError e) {
+                JOptionPane.showMessageDialog(getRoot(), e.getMessage(), "Create Failed", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void onEditCategory() {
+        int selectedIdx = categoriesTable.getSelectedRow();
+        if (selectedIdx < 0) {
+            return;
+        }
+
+        Category selected = categories.get(selectedIdx);
+        EditCategoryDialog dialog = new EditCategoryDialog(selected);
+        dialog.pack();
+        dialog.setLocationRelativeTo(editCategoryButton);
+        dialog.setVisible(true);
+
+        String closeOperation = dialog.getCloseOperation();
+        switch (closeOperation) {
+            case "DELETE" -> {
+                try {
+                    controller.deleteCategory(selected.getId());
+                    refreshCategories();
+                } catch (DatabaseError e) {
+                    JOptionPane.showMessageDialog(getRoot(), "Deletion failed: " + e.getMessage(), "Internal Error", JOptionPane.ERROR_MESSAGE);
+                } catch (LogicError e) {
+                    JOptionPane.showMessageDialog(getRoot(), e.getMessage(), "Validation Failed", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+            case "SAVE" -> {
+                String name = dialog.getCategoryName();
+                CategoryType type = dialog.getCategoryType();
+                CategoryGroup group = dialog.getCategoryGroup();
+                try {
+                    controller.updateCategory(selected.getId(), name, type, group);
+                    refreshCategories();
+                } catch (DatabaseError e) {
+                    JOptionPane.showMessageDialog(getRoot(), "Update failed: " + e.getMessage(), "Internal Error", JOptionPane.ERROR_MESSAGE);
+                }
             }
         }
     }

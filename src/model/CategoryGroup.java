@@ -1,12 +1,18 @@
 package model;
 
 public enum CategoryGroup {
-    DAY_TO_DAY,
-    RECURRING,
-    EXCEPTION,
-    INVESTMENT,
-    DEBT,
-    INTEREST;
+    DAY_TO_DAY(1),
+    RECURRING(2),
+    EXCEPTION(3),
+    INVESTMENT(4),
+    DEBT(5),
+    INTEREST(6);
+
+    final private int id;
+
+    CategoryGroup(int id) {
+        this.id = id;
+    }
 
     public static CategoryGroup fromString(String s) {
         if (s.equals("DAY_TO_DAY")) {
@@ -27,8 +33,11 @@ public enum CategoryGroup {
         return CategoryGroup.EXCEPTION;
     }
 
-    @Override
-    public String toString() {
+    public int getId() {
+        return id;
+    }
+
+    public String toInternalString() {
         return switch (this) {
             case DAY_TO_DAY -> "DAY_TO_DAY";
             case RECURRING -> "RECURRING";
@@ -39,7 +48,8 @@ public enum CategoryGroup {
         };
     }
 
-    public String toFriendlyString() {
+    @Override
+    public String toString() {
         return switch (this) {
             case DAY_TO_DAY -> "Day-to-day";
             case RECURRING -> "Recurring";

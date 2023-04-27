@@ -1,9 +1,15 @@
 package model;
 
 public enum CategoryType {
-    INCOME,
-    EXPENSE,
-    INCOME_OR_EXPENSE;
+    INCOME(1),
+    EXPENSE(2),
+    INCOME_OR_EXPENSE(3);
+
+    final private int id;
+
+    CategoryType(int id) {
+        this.id = id;
+    }
 
     public static CategoryType fromString(String s) {
         if (s.equals("INCOME")) {
@@ -15,8 +21,11 @@ public enum CategoryType {
         return CategoryType.INCOME_OR_EXPENSE;
     }
 
-    @Override
-    public String toString() {
+    public int getId() {
+        return id;
+    }
+
+    public String toInternalString() {
         return switch (this) {
             case INCOME -> "INCOME";
             case EXPENSE -> "EXPENSE";
@@ -24,7 +33,8 @@ public enum CategoryType {
         };
     }
 
-    public String toFriendlyString() {
+    @Override
+    public String toString() {
         return switch (this) {
             case INCOME -> "Income";
             case EXPENSE -> "Expense";

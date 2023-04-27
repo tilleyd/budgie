@@ -4,6 +4,7 @@ import java.util.Date;
 
 public class Transaction {
     final private int id;
+    final private int accountId;
     final private int categoryId;
     final private Decimal amount;
     final private Date date;
@@ -11,8 +12,9 @@ public class Transaction {
     final private Integer transferAccountId;
     final private Integer transferTransactionId;
 
-    public Transaction(int id, int categoryId, Decimal amount, Date date, String info, Integer transferAccountId, Integer transferTransactionId) {
+    public Transaction(int id, int accountId, int categoryId, Decimal amount, Date date, String info, Integer transferAccountId, Integer transferTransactionId) {
         this.id = id;
+        this.accountId = accountId;
         this.categoryId = categoryId;
         this.amount = amount;
         this.date = date;
@@ -23,6 +25,10 @@ public class Transaction {
 
     public int getId() {
         return id;
+    }
+
+    public int getAccountId() {
+        return accountId;
     }
 
     public int getCategoryId() {
