@@ -271,7 +271,8 @@ public class SqliteDatabase implements Database {
         String sql = "SELECT category_id, name, " +
                 "category_groups.description AS \"group\", category_types.description AS \"type\" FROM categories " +
                 "INNER JOIN category_groups ON category_group_id = \"group\" " +
-                "INNER JOIN category_types ON category_type_id = \"type\"";
+                "INNER JOIN category_types ON category_type_id = \"type\" " +
+                "ORDER BY name ASC";
         try {
             Statement s = connection.createStatement();
             ResultSet rs = s.executeQuery(sql);
